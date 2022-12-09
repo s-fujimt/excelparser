@@ -55,7 +55,10 @@ class ExcelParser:
     def __get_color_data(self, color_data):
         color = None
         if color_data.type == "rgb":
-            color = color_data.rgb[2:]
+            if color_data.rgb == "00000000":
+                color = "FFFFFF"
+            else:
+              color = color_data.rgb[2:]
         if color_data.type == "indexed":
             if color_data.indexed == 63:
                 color = "FFFFFF"
@@ -129,27 +132,12 @@ class ExcelParser:
             if border_color[0]:
               outline["color"] = self.__get_color_data(border_color[0])
           else:
-              #refactor
-              if cell.border.top.style:
-                cell_border_data["top"] = {
-                    "style": self.__get_border_style(cell.border.top.style),
-                    "color": self.__get_color_data(cell.border.top.color)
-                }
-              if cell.border.right.style:
-                cell_border_data["right"] = {
-                    "style": self.__get_border_style(cell.border.right.style),
-                    "color": self.__get_color_data(cell.border.right.color)
-                }
-              if cell.border.bottom.style:
-                cell_border_data["bottom"] = {
-                    "style": self.__get_border_style(cell.border.bottom.style),
-                    "color": self.__get_color_data(cell.border.bottom.color)
-                }
-              if cell.border.left.style:
-                cell_border_data["left"] = {
-                    "style": self.__get_border_style(cell.border.left.style),
-                    "color": self.__get_color_data(cell.border.left.color)
-                }
+              for side in ["top", "right", "bottom", "left"]:
+                if getattr(cell.border, side).style:
+                  cell_border_data[side] = {
+                      "style": self.__get_border_style(getattr(cell.border, side).style),
+                      "color": self.__get_color_data(getattr(cell.border, side).color)
+                  }
 
         if outline:
             cell_border_data["outline"] = outline
@@ -158,8 +146,9 @@ class ExcelParser:
 
     def __get_fill_color(self, cell):
         if cell.fill:
-          if cell.fill.start_color.type == "rgb" and cell.fill.start_color.rgb != "00000000":
-              return cell.fill.start_color.rgb.replace("FF", "#", 1)
+            color = self.__get_color_data(cell.fill.start_color)
+            if color and color != "#FFFFFF":
+                return color
         return None
 
     def __get_cell_data(self, cell):
@@ -248,6 +237,6 @@ class ExcelParser:
 
         return json.dumps({"sheets": sheet_data}, ensure_ascii=False)
 
-filepath = "original/test3.xlsx"
+filepath = "original/test.xlsx"
 excelParser = ExcelParser()
 print(excelParser.parse_xlsx_to_json_file(filepath))
