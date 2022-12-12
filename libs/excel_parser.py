@@ -5,6 +5,7 @@ from libs.color_helper import theme_and_tint_to_rgb
 class ExcelParser:
     workbook = None
     current_sheet = None
+    current_sheet_first_empty_row = None
     current_range = None
 
     def __get_merged_ranges(self):
@@ -28,15 +29,13 @@ class ExcelParser:
             cell_data["rowspan"] = self.current_range["rows"]
         return cell_data
 
-    def __get_first_empty_row(self):
-        return self.current_sheet.max_row + 1
+    def __set_first_empty_row(self):
+        self.current_sheet_first_empty_row = self.current_sheet.max_row + 1
 
     def __get_default_font_data(self):
-        first_empty_row = self.__get_first_empty_row()
-        # TODO get font family
         return {
-          "font": self.current_sheet.cell(row=first_empty_row, column=1).font.name,
-          "size": int(self.current_sheet.cell(row=first_empty_row, column=1).font.size)
+          "font": self.current_sheet.cell(row=self.current_sheet_first_empty_row, column=1).font.name,
+          "size": int(self.current_sheet.cell(row=self.current_sheet_first_empty_row, column=1).font.size)
         }
     
     def __get_cell_alignment(self, cell):
@@ -203,7 +202,7 @@ class ExcelParser:
     def __get_rows(self):
         rows = []
         for row in self.current_sheet.iter_rows():
-            if row[0].row == self.current_sheet.max_row - 1:
+            if row[0].row == self.current_sheet_first_empty_row:
                 break
             row_data = self.__get_row_data(row)
             if row_data:
@@ -235,6 +234,7 @@ class ExcelParser:
         sheet_data = []
         for i, sheetname in enumerate(sheet_names):
             self.current_sheet = self.workbook[sheetname]
+            self.__set_first_empty_row()
             sheet_data.append(self.__get_sheet_data(i+1))
 
         return json.dumps({"sheets": sheet_data}, ensure_ascii=False)

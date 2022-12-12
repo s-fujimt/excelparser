@@ -18,7 +18,8 @@
         e.preventDefault();
         const formData = new FormData();
         formData.append("file", document.querySelector("#file").files[0]);
-        fetch("https://excelparser-backend.onrender.com/parse", {
+        fetch("http://localhost:5000/parse", {
+          // fetch("https://excelparser-backend.onrender.com/parse", {
           method: "POST",
           body: formData,
         })
@@ -67,10 +68,8 @@
               );
               sheet.appendChild(sheetTable);
               let skip = [];
-              console.log(skip);
               lines.forEach(({ linenumber, columns }) => {
                 skip[linenumber] ? skip[linenumber] : (skip[linenumber] = []);
-                console.log(skip);
 
                 const row = document.createElement("tr");
                 const cell = document.createElement("td");
