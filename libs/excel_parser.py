@@ -1,6 +1,6 @@
 import openpyxl
 import json
-from color_helper import theme_and_tint_to_rgb
+from libs.color_helper import theme_and_tint_to_rgb
 
 class ExcelParser:
     workbook = None
@@ -29,7 +29,7 @@ class ExcelParser:
         return cell_data
 
     def __get_first_empty_row(self):
-        return self.current_sheet.max_row
+        return self.current_sheet.max_row + 1
 
     def __get_default_font_data(self):
         first_empty_row = self.__get_first_empty_row()
@@ -77,7 +77,7 @@ class ExcelParser:
         if cell.font:
           if cell.font.name != default_font_data["font"]:
             cell_font_data["font"] = cell.font.name
-          if cell.font.size != default_font_data["size"]:
+          if cell.font.size and cell.font.size != default_font_data["size"]:
             cell_font_data["size"] = int(cell.font.size)
           if cell.font.bold:
             cell_font_data["style"] = "bold"
@@ -117,27 +117,28 @@ class ExcelParser:
             if border_color:
                 outline["color"] = self.__get_color_data(border_color)
         else:
-          border = [border.top, border.right, border.bottom, border.left]
+            if border.top and border.right and border.bottom and border.left:
+                border = [border.top, border.right, border.bottom, border.left]
 
-          border_style = list(set([b.style for b in border]))
-          border_color = list(set([b.color for b in border]))
+                border_style = list(set([b.style for b in border]))
+                border_color = list(set([b.color for b in border]))
 
-          if len(border_style) > 1 and None in border_style:
-              border_style.remove(None)
-              border_color.remove(None)
+                if len(border_style) > 1 and None in border_style:
+                    border_style.remove(None)
+                    border_color.remove(None)
 
-          if len(border_style) == 1 and len(border_color) == 1:
-            if border_style[0]:
-              outline["style"] = self.__get_border_style(border_style[0])
-            if border_color[0]:
-              outline["color"] = self.__get_color_data(border_color[0])
-          else:
-              for side in ["top", "right", "bottom", "left"]:
-                if getattr(cell.border, side).style:
-                  cell_border_data[side] = {
-                      "style": self.__get_border_style(getattr(cell.border, side).style),
-                      "color": self.__get_color_data(getattr(cell.border, side).color)
-                  }
+                if len(border_style) == 1 and len(border_color) == 1:
+                    if border_style[0]:
+                        outline["style"] = self.__get_border_style(border_style[0])
+                    if border_color[0]:
+                        outline["color"] = self.__get_color_data(border_color[0])
+                else:
+                    for side in ["top", "right", "bottom", "left"]:
+                        if getattr(cell.border, side).style:
+                            cell_border_data[side] = {
+                                "style": self.__get_border_style(getattr(cell.border, side).style),
+                                "color": self.__get_color_data(getattr(cell.border, side).color)
+                            }
 
         if outline:
             cell_border_data["outline"] = outline
@@ -225,7 +226,6 @@ class ExcelParser:
       workbook = openpyxl.load_workbook(excel_path)
       return workbook
 
-  # TODO how to accept file
     def parse_xlsx_to_json_file(self, excel_path):
         self.workbook = self.__open_workbook(excel_path)
         sheet_names = self.workbook.sheetnames
@@ -236,7 +236,3 @@ class ExcelParser:
             sheet_data.append(self.__get_sheet_data(i+1))
 
         return json.dumps({"sheets": sheet_data}, ensure_ascii=False)
-
-filepath = "original/test.xlsx"
-excelParser = ExcelParser()
-print(excelParser.parse_xlsx_to_json_file(filepath))
