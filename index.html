@@ -23,7 +23,378 @@
           body: formData,
         })
           .then((res) => res.json())
-          .then((data) => console.log(data));
+          .then((data) => {
+            console.log(data);
+            const availableColumns = [
+              "A",
+              "B",
+              "C",
+              "D",
+              "E",
+              "F",
+              "G",
+              "H",
+              "I",
+              "J",
+              "K",
+              "L",
+              "M",
+              "N",
+              "O",
+              "P",
+              "Q",
+              "R",
+              "S",
+              "T",
+              "U",
+              "V",
+              "W",
+              "X",
+              "Y",
+              "Z",
+            ];
+            const sheets = data.sheets;
+            //for each sheet create markup
+            sheets.forEach(({ sheetnumber, sheetname, font, lines }) => {
+              const sheet = document.createElement("div");
+              sheet.setAttribute("id", `sheet${sheetnumber}`);
+              sheet.innerHTML = `<h1>#${sheetnumber} - ${sheetname}</h1>`;
+              const sheetTable = document.createElement("table");
+              const { font: fontFamily, size } = font;
+              sheetTable.setAttribute(
+                "style",
+                `font-family: ${fontFamily}; font-size: ${size}px;`
+              );
+              sheet.appendChild(sheetTable);
+              let skip = [];
+              console.log(skip);
+              lines.forEach(({ linenumber, columns }) => {
+                skip[linenumber] ? skip[linenumber] : (skip[linenumber] = []);
+                console.log(skip);
+
+                const row = document.createElement("tr");
+                const cell = document.createElement("td");
+                cell.innerHTML = linenumber;
+                row.appendChild(cell);
+
+                if (columns) {
+                  availableColumns.forEach((column) => {
+                    if (skip[linenumber].includes(column)) {
+                      return;
+                    }
+                    const cell = document.createElement("td");
+                    const columnData = columns.find(
+                      (col) => col.colnumber === column
+                    );
+                    cell.setAttribute("style", "");
+
+                    if (columnData) {
+                      cell.innerHTML = columnData.value;
+                      if (columnData.font) {
+                        if (columnData.font.style) {
+                          cell.setAttribute(
+                            "style",
+                            cell.getAttribute("style") +
+                              `font-weight: ${columnData.font.style};`
+                          );
+                          cell.innerHTML += `<br>(${columnData.font.style})`;
+                        }
+                        if (columnData.font.size) {
+                          cell.setAttribute(
+                            "style",
+                            cell.getAttribute("style") +
+                              `font-size: ${columnData.font.size}px;`
+                          );
+                          cell.innerHTML += `<br>(${columnData.font.size}px)`;
+                        }
+
+                        if (columnData.font.color) {
+                          cell.setAttribute(
+                            "style",
+                            cell.getAttribute("style") +
+                              `color: ${columnData.font.color};`
+                          );
+                          cell.innerHTML += `<br>(${columnData.font.color})`;
+                        }
+
+                        if (columnData.font.underline) {
+                          if (columnData.font.underline == "single") {
+                            cell.setAttribute(
+                              "style",
+                              cell.getAttribute("style") +
+                                `text-decoration: underline;`
+                            );
+                            cell.innerHTML += `<br>(single underline)`;
+                          }
+                          if (columnData.font.underline == "double") {
+                            cell.setAttribute(
+                              "style",
+                              cell.getAttribute("style") +
+                                `text-decoration: double underline;`
+                            );
+                            cell.innerHTML += `<br>(double underline)`;
+                          }
+                        }
+
+                        if (columnData.font.strikethrough) {
+                          cell.setAttribute(
+                            "style",
+                            cell.getAttribute("style") +
+                              `text-decoration: line-through;`
+                          );
+                          cell.innerHTML += `<br>(strikethrough)`;
+                        }
+                      }
+
+                      if (columnData.border) {
+                        if (columnData.border.outline) {
+                          if (columnData.border.outline.style) {
+                            if (columnData.border.outline.style == "single") {
+                              cell.setAttribute(
+                                "style",
+                                cell.getAttribute("style") +
+                                  `border: 1px solid black;`
+                              );
+                            }
+                            if (columnData.border.outline.style == "thick") {
+                              cell.setAttribute(
+                                "style",
+                                cell.getAttribute("style") +
+                                  `border: 2px solid black;`
+                              );
+                            }
+
+                            if (
+                              columnData.border.outline.style == "extrathick"
+                            ) {
+                              cell.setAttribute(
+                                "style",
+                                cell.getAttribute("style") +
+                                  `border: 3px solid black;`
+                              );
+                            }
+                          }
+                          if (columnData.border.outline.color) {
+                            cell.setAttribute(
+                              "style",
+                              cell.getAttribute("style") +
+                                `border-color: ${columnData.border.outline.color};`
+                            );
+                          }
+                        }
+
+                        if (columnData.border.left) {
+                          if (columnData.border.left.style) {
+                            if (columnData.border.left.style == "single") {
+                              cell.setAttribute(
+                                "style",
+                                cell.getAttribute("style") +
+                                  `border-left: 1px solid black;`
+                              );
+                            }
+                            if (columnData.border.left.style == "thick") {
+                              cell.setAttribute(
+                                "style",
+                                cell.getAttribute("style") +
+                                  `border-left: 2px solid black;`
+                              );
+                            }
+
+                            if (columnData.border.left.style == "extrathick") {
+                              cell.setAttribute(
+                                "style",
+                                cell.getAttribute("style") +
+                                  `border-left: 3px solid black;`
+                              );
+                            }
+                          }
+                          if (columnData.border.left.color) {
+                            cell.setAttribute(
+                              "style",
+                              cell.getAttribute("style") +
+                                `border-left-color: ${columnData.border.left.color};`
+                            );
+                          }
+                        }
+
+                        if (columnData.border.right) {
+                          if (columnData.border.right.style) {
+                            if (columnData.border.right.style == "single") {
+                              cell.setAttribute(
+                                "style",
+                                cell.getAttribute("style") +
+                                  `border-right: 1px solid black;`
+                              );
+                            }
+                            if (columnData.border.right.style == "thick") {
+                              cell.setAttribute(
+                                "style",
+                                cell.getAttribute("style") +
+                                  `border-right: 2px solid black;`
+                              );
+                            }
+
+                            if (columnData.border.right.style == "extrathick") {
+                              cell.setAttribute(
+                                "style",
+                                cell.getAttribute("style") +
+                                  `border-right: 3px solid black;`
+                              );
+                            }
+                          }
+                          if (columnData.border.right.color) {
+                            cell.setAttribute(
+                              "style",
+                              cell.getAttribute("style") +
+                                `border-right-color: ${columnData.border.right.color};`
+                            );
+                          }
+                        }
+
+                        if (columnData.border.top) {
+                          if (columnData.border.top.style) {
+                            if (columnData.border.top.style == "single") {
+                              cell.setAttribute(
+                                "style",
+                                cell.getAttribute("style") +
+                                  `border-top: 1px solid black;`
+                              );
+                            }
+                            if (columnData.border.top.style == "thick") {
+                              cell.setAttribute(
+                                "style",
+                                cell.getAttribute("style") +
+                                  `border-top: 2px solid black;`
+                              );
+                            }
+
+                            if (columnData.border.top.style == "extrathick") {
+                              cell.setAttribute(
+                                "style",
+                                cell.getAttribute("style") +
+                                  `border-top: 3px solid black;`
+                              );
+                            }
+                          }
+                          if (columnData.border.top.color) {
+                            cell.setAttribute(
+                              "style",
+                              cell.getAttribute("style") +
+                                `border-top-color: ${columnData.border.top.color};`
+                            );
+                          }
+                        }
+
+                        if (columnData.border.bottom) {
+                          if (columnData.border.bottom.style) {
+                            if (columnData.border.bottom.style == "single") {
+                              cell.setAttribute(
+                                "style",
+                                cell.getAttribute("style") +
+                                  `border-bottom: 1px solid black;`
+                              );
+                            }
+                            if (columnData.border.bottom.style == "thick") {
+                              cell.setAttribute(
+                                "style",
+                                cell.getAttribute("style") +
+                                  `border-bottom: 2px solid black;`
+                              );
+                            }
+
+                            if (
+                              columnData.border.bottom.style == "extrathick"
+                            ) {
+                              cell.setAttribute(
+                                "style",
+                                cell.getAttribute("style") +
+                                  `border-bottom: 3px solid black;`
+                              );
+                            }
+                          }
+                          if (columnData.border.bottom.color) {
+                            cell.setAttribute(
+                              "style",
+                              cell.getAttribute("style") +
+                                `border-bottom-color: ${columnData.border.bottom.color};`
+                            );
+                          }
+                        }
+                      }
+
+                      if (columnData.fill) {
+                        if (columnData.fill.color) {
+                          cell.setAttribute(
+                            "style",
+                            cell.getAttribute("style") +
+                              `background-color: ${columnData.fill.color};`
+                          );
+                        }
+                      }
+
+                      if (columnData.alignment) {
+                        if (columnData.alignment.horizontal) {
+                          // if (columnData.alignment.horizontal == "left") {
+                          //   cell.setAttribute(
+                          //     "style",
+                          //     cell.getAttribute("style") + `text-align: left;`
+                          //   );
+                          // }
+                          if (columnData.alignment.horizontal == "center") {
+                            cell.setAttribute(
+                              "style",
+                              cell.getAttribute("style") + `text-align: center;`
+                            );
+                          }
+                          if (columnData.alignment.horizontal == "right") {
+                            cell.setAttribute(
+                              "style",
+                              cell.getAttribute("style") + `text-align: right;`
+                            );
+                          }
+                        }
+                      }
+
+                      if (columnData.colspan) {
+                        cell.setAttribute("colspan", columnData.colspan);
+
+                        for (let i = 1; i < columnData.colspan; i++) {
+                          skip[linenumber].push(
+                            availableColumns[
+                              availableColumns.indexOf(column) + i
+                            ]
+                          );
+                        }
+                      }
+
+                      if (columnData.rowspan) {
+                        cell.setAttribute("rowspan", columnData.rowspan);
+
+                        for (let i = 1; i < columnData.rowspan; i++) {
+                          skip[linenumber + i] = skip[linenumber + i] || [];
+                          skip[linenumber + i].push(column);
+                          if (columnData.colspan) {
+                            for (let j = 1; j < columnData.colspan; j++) {
+                              skip[linenumber + i].push(
+                                availableColumns[
+                                  availableColumns.indexOf(column) + j
+                                ]
+                              );
+                            }
+                          }
+                        }
+                      }
+                    }
+
+                    row.appendChild(cell);
+                  });
+                }
+
+                sheetTable.appendChild(row);
+              });
+              document.body.appendChild(sheet);
+            });
+          });
       });
     </script>
   </body>
