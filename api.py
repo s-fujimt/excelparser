@@ -1,5 +1,3 @@
-# API with endpoint to upload excel file
-
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from libs.excel_parser import ExcelParser

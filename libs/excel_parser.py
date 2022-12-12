@@ -203,6 +203,8 @@ class ExcelParser:
     def __get_rows(self):
         rows = []
         for row in self.current_sheet.iter_rows():
+            if row[0].row == self.current_sheet.max_row:
+                break
             row_data = self.__get_row_data(row)
             if row_data:
               rows.append(row_data)
