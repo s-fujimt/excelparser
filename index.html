@@ -11,11 +11,13 @@
       <input type="file" id="file" accept=".xlsx" />
       <input type="submit" value="Upload" />
     </form>
+    <div id="sheets"></div>
 
     <script>
       const form = document.querySelector("form");
       form.addEventListener("submit", (e) => {
         e.preventDefault();
+        document.getElementById("sheets").innerHTML = "";
         const formData = new FormData();
         formData.append("file", document.querySelector("#file").files[0]);
         // fetch("http://localhost:5000/parse", {
@@ -88,7 +90,9 @@
                     cell.setAttribute("style", "");
 
                     if (columnData) {
-                      cell.innerHTML = columnData.value;
+                      if (columnData.value) {
+                        cell.innerHTML = columnData.value;
+                      }
                       if (columnData.font) {
                         if (columnData.font.style) {
                           cell.setAttribute(
@@ -391,7 +395,7 @@
 
                 sheetTable.appendChild(row);
               });
-              document.body.appendChild(sheet);
+              document.getElementById("sheets").appendChild(sheet);
             });
           });
       });

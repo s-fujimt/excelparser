@@ -9,11 +9,14 @@ CORS(app)
 def parse():
     excel_file = request.files['file']
     excel_parser = ExcelParser()
-    result_json = excel_parser.parse_xlsx_to_json_file(excel_file)
-    if result_json:
-        return result_json
-    else:
-        return jsonify({"error": "Error parsing file"})
+    try:
+        result_json = excel_parser.parse_xlsx_to_json_file(excel_file)
+        if result_json:
+            return result_json
+        else:
+            return jsonify({"error": "Error parsing file"})
+    except Exception as e:
+        return jsonify({"error": str(e)})
 
 if __name__ == '__main__':
     app.run(debug=True)
