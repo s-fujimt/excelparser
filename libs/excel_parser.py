@@ -195,7 +195,6 @@ class ExcelParser:
 
                 for direction in ["top", "right", "bottom", "left"]:
                     if getattr(border, direction):
-                        print(cell.coordinate)
                         if border.bottom.style is None and direction == "bottom":
                             neighbor = self.current_sheet.cell(row=cell.row+1, column=cell.column)
                             if neighbor.border:
