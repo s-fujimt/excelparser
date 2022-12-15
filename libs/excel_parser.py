@@ -37,7 +37,7 @@ class ExcelParser:
     def __set_first_empty_row(self):
         try:
             for row in range(self.current_sheet.max_row, 0, -1):
-                for column in range(1, self.current_sheet.max_column + 1):
+                for column in range(1, self.current_sheet_first_empty_column + 1):
                     cell = self.current_sheet.cell(row=row, column=column)
                     if cell.value or self.__has_fill_color(cell) or self.__has_border(cell):
                         self.current_sheet_first_empty_row = row + 1
@@ -151,6 +151,7 @@ class ExcelParser:
           return "single"
     
     def __has_border(self, cell):
+        print("Checking if cell has border")
         try:
             border = cell.border
             if border:
@@ -255,6 +256,7 @@ class ExcelParser:
             return {}
     
     def __has_fill_color(self, cell):
+        print("Checking if cell has fill color")
         try:
             if cell.fill:
                 color = self.__get_color_data(cell.fill.start_color)
@@ -384,8 +386,8 @@ class ExcelParser:
             sheet_data = []
             for i, sheetname in enumerate(sheet_names):
                 self.current_sheet = self.workbook[sheetname]
-                self.__set_first_empty_row()
                 self.__set_first_empty_column()
+                self.__set_first_empty_row()
                 sheet_data.append(self.__get_sheet_data(i+1))
 
             return json.dumps({"sheets": sheet_data}, ensure_ascii=False)
