@@ -10,9 +10,11 @@ class ExcelParser:
     current_range = None
 
     def __get_merged_ranges(self):
+        print("Getting merged ranges")
         return self.current_sheet.merged_cells.ranges if self.current_sheet.merged_cells else []
 
     def __is_merged_cell(self, cell, merged_ranges):
+        print("Checking if cell is merged")
         for merged_range in merged_ranges:
             if cell.coordinate in merged_range:
                 self.current_range = {
@@ -23,6 +25,7 @@ class ExcelParser:
         return False
 
     def __get_merged_cell_data(self):
+        print("Getting merged cell data")
         try:
             cell_data = {}
             if self.current_range["columns"] > 1:
@@ -35,6 +38,7 @@ class ExcelParser:
             return {}
 
     def __set_first_empty_row(self):
+        print("Setting first empty row")
         try:
             for row in range(self.current_sheet.max_row, 0, -1):
                 for column in range(1, self.current_sheet.max_column + 1):
@@ -49,6 +53,7 @@ class ExcelParser:
 
 
     def __set_first_empty_column(self):
+        print("Setting first empty column")
         try:
             for column in range(self.current_sheet.max_column, 0, -1):
                 for row in range(1, self.current_sheet.max_row + 1):
@@ -63,6 +68,7 @@ class ExcelParser:
 
 
     def __get_default_font_data(self):
+        print("Getting default font data")
         try:
             return {
                 "font": self.current_sheet.cell(row=1, column=1).font.name,
@@ -73,6 +79,7 @@ class ExcelParser:
             return {}
     
     def __get_cell_alignment(self, cell):
+        print("Getting cell alignment")
         try:
             alignment = {}
             if cell.alignment:
@@ -86,6 +93,7 @@ class ExcelParser:
             return {}
 
     def __get_color_from_theme(self, color_data):
+        print("Getting color from theme")
         try:
             color = theme_and_tint_to_rgb(self.workbook, color_data.theme, color_data.tint)
             return color
@@ -94,6 +102,7 @@ class ExcelParser:
             return {}
 
     def __get_color_data(self, color_data):
+        print("Getting color data")
         try:
             color = None
             if color_data.type == "rgb":
@@ -117,6 +126,7 @@ class ExcelParser:
             return None
 
     def __get_cell_font_data(self, cell):
+        print("Getting cell font data")
         try:
             cell_font_data = {}
             default_font_data = self.__get_default_font_data()
@@ -141,6 +151,7 @@ class ExcelParser:
             return {}
 
     def __get_border_style(self, border_style):
+        print("Getting border style")
         if border_style == "medium":
             return "thick"
         if border_style == "thick":
@@ -151,6 +162,7 @@ class ExcelParser:
           return "single"
     
     def __has_border(self, cell):
+        print("Checking if cell has border")
         try:
             border = cell.border
             if border:
@@ -172,6 +184,7 @@ class ExcelParser:
             return False
     
     def __get_cell_border_data(self, cell, is_merged_cell):
+        print("Getting cell border data")
         try:
             cell_border_data = {}
             outline = {}
@@ -223,6 +236,7 @@ class ExcelParser:
             return {}
     
     def __has_fill_color(self, cell):
+        print("Checking if cell has fill color")
         try:
             if cell.fill:
                 color = self.__get_color_data(cell.fill.start_color)
@@ -234,6 +248,7 @@ class ExcelParser:
             return False
 
     def __get_fill_color(self, cell):
+        print("Getting cell fill color")
         try:
             if cell.fill:
                 color = self.__get_color_data(cell.fill.start_color)
@@ -245,6 +260,8 @@ class ExcelParser:
             return None
 
     def __get_cell_data(self, cell):
+        print("Getting cell data")
+        print(cell.coordinate)
         try:
             cell_data = {
                 "colnumber": cell.coordinate[0]
@@ -284,6 +301,7 @@ class ExcelParser:
             return {}
 
     def __get_row_data(self, row):
+        print("Getting row data")
         try:
             row_data = {
                 "linenumber": row[0].row
@@ -305,6 +323,7 @@ class ExcelParser:
             return {}
 
     def __get_rows(self):
+        print("Getting rows")
         try:
             rows = []
             for row in self.current_sheet.iter_rows():
@@ -320,6 +339,7 @@ class ExcelParser:
 
 
     def __get_sheet_data(self, sheetnumber):
+        print("Getting sheet data")
         try:
             font_data = self.__get_default_font_data()
             rows = self.__get_rows()
@@ -337,6 +357,7 @@ class ExcelParser:
             return {}
 
     def __open_workbook(self, excel_path):
+        print("Opening workbook")
         try:
             workbook = openpyxl.load_workbook(excel_path)
             return workbook
@@ -345,6 +366,7 @@ class ExcelParser:
             return None
     
     def parse_xlsx_to_json_file(self, excel_path):
+        print("Parsing xlsx to json file")
         try:
             self.workbook = self.__open_workbook(excel_path)
             sheet_names = self.workbook.sheetnames
