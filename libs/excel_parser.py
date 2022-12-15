@@ -195,6 +195,39 @@ class ExcelParser:
 
                 for direction in ["top", "right", "bottom", "left"]:
                     if getattr(border, direction):
+                        print(cell.coordinate)
+                        if border.bottom.style is None and direction == "bottom":
+                            neighbor = self.current_sheet.cell(row=cell.row+1, column=cell.column)
+                            if neighbor.border:
+                                if neighbor.border.top:
+                                    if neighbor.border.top.style:
+                                        locals()[f"border_{direction}"].append(self.__get_border_style(neighbor.border.top.style))
+                                    if neighbor.border.top.color:
+                                        locals()[f"border_{direction}"].append(self.__get_color_data(neighbor.border.top.color))
+                        if border.top.style is None and direction == "top":
+                            neighbor = self.current_sheet.cell(row=cell.row-1, column=cell.column)
+                            if neighbor.border:
+                                if neighbor.border.bottom:
+                                    if neighbor.border.bottom.style:
+                                        locals()[f"border_{direction}"].append(self.__get_border_style(neighbor.border.bottom.style))
+                                    if neighbor.border.bottom.color:
+                                        locals()[f"border_{direction}"].append(self.__get_color_data(neighbor.border.bottom.color))
+                        if border.left.style is None and direction == "left":
+                            neighbor = self.current_sheet.cell(row=cell.row, column=cell.column-1)
+                            if neighbor.border:
+                                if neighbor.border.right:
+                                    if neighbor.border.right.style:
+                                        locals()[f"border_{direction}"].append(self.__get_border_style(neighbor.border.right.style))
+                                    if neighbor.border.right.color:
+                                        locals()[f"border_{direction}"].append(self.__get_color_data(neighbor.border.right.color))
+                        if border.right.style is None and direction == "right":
+                            neighbor = self.current_sheet.cell(row=cell.row, column=cell.column+1)
+                            if neighbor.border:
+                                if neighbor.border.left:
+                                    if neighbor.border.left.style:
+                                        locals()[f"border_{direction}"].append(self.__get_border_style(neighbor.border.left.style))
+                                    if neighbor.border.left.color:
+                                        locals()[f"border_{direction}"].append(self.__get_color_data(neighbor.border.left.color))
                         if getattr(border, direction).style:
                             locals()[f"border_{direction}"].append(self.__get_border_style(getattr(border, direction).style))
                         if getattr(border, direction).color:
