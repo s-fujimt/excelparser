@@ -1,9 +1,12 @@
 import openpyxl
 import json
 from libs.color_helper import theme_and_tint_to_rgb
+import zipfile
+import xml.etree.ElementTree as ET
 
 class ExcelParser:
     workbook = None
+    custom_index  = None
     current_sheet = None
     current_sheet_first_empty_row = None
     current_sheet_first_empty_column = None
@@ -107,13 +110,16 @@ class ExcelParser:
                 if color_data.indexed == 64:
                     color = "000000"
                 else:
-                    Colors = openpyxl.styles.colors.COLOR_INDEX
+                    if self.custom_index:
+                        Colors = self.custom_index
+                    else:
+                        Colors = openpyxl.styles.colors.COLOR_INDEX
                     color = Colors[color_data.indexed][2:]
             if color_data.type == "theme":
                 color = self.__get_color_from_theme(color_data)
             return f"#{color}"
         except:
-            print("Error getting color data")
+            print("Error getting color data (" + str(color_data) + ")") 
             return None
 
     def __get_cell_font_data(self, cell):
@@ -151,7 +157,6 @@ class ExcelParser:
           return "single"
     
     def __has_border(self, cell):
-        print("Checking if cell has border")
         try:
             border = cell.border
             if border:
@@ -169,7 +174,7 @@ class ExcelParser:
                         return True
             return False
         except:
-            print("Error checking if cell has border")
+            print("Error checking if cell has border (" + cell.coordinate + ")")
             return False
     
     def __get_cell_border_data(self, cell, is_merged_cell):
@@ -252,11 +257,10 @@ class ExcelParser:
         
             return cell_border_data
         except:
-            print("Error getting cell border data")
+            print("Error getting cell border data (" + cell.coordinate + ")")
             return {}
     
     def __has_fill_color(self, cell):
-        print("Checking if cell has fill color")
         try:
             if cell.fill:
                 color = self.__get_color_data(cell.fill.start_color)
@@ -264,7 +268,7 @@ class ExcelParser:
                     return True
             return False
         except:
-            print("Error checking if cell has fill color")
+            print("Error checking if cell has fill color (" + str(cell.coordinate) + ")")
             return False
 
     def __get_fill_color(self, cell):
@@ -275,7 +279,7 @@ class ExcelParser:
                     return color
             return None
         except:
-            print("Error getting cell fill color")
+            print("Error getting cell fill color (" + str(cell.coordinate) + ")")
             return None
 
     def __get_cell_data(self, cell):
@@ -314,10 +318,11 @@ class ExcelParser:
 
             return cell_data
         except:
-            print("Error getting cell data")
+            print("Error getting cell data (" + cell.coordinate + ")")
             return {}
 
     def __get_row_data(self, row):
+        empty_cells = 0
         try:
             row_data = {
                 "linenumber": row[0].row
@@ -325,11 +330,14 @@ class ExcelParser:
 
             columns = []
             for cell in row:
-                if cell.column == self.current_sheet_first_empty_column:
+                if cell.column == self.current_sheet_first_empty_column or empty_cells > 50:
                     break
                 cell_data = self.__get_cell_data(cell)
                 if cell_data:
                     columns.append(cell_data)
+                    empty_cells = 0
+                else:
+                    empty_cells += 1
             
             if columns:
                 row_data["columns"] = columns
@@ -339,14 +347,18 @@ class ExcelParser:
             return {}
 
     def __get_rows(self):
+        empty_rows = 0
         try:
             rows = []
             for row in self.current_sheet.iter_rows():
-                if row[0].row == self.current_sheet_first_empty_row:
+                if row[0].row == self.current_sheet_first_empty_row or empty_rows > 50:
                     break
                 row_data = self.__get_row_data(row)
                 if row_data:
                     rows.append(row_data)
+                    empty_rows = 0
+                else:
+                    empty_rows += 1
             return rows
         except:
             print("Error getting rows")
@@ -370,9 +382,25 @@ class ExcelParser:
             print("Error getting sheet data")
             return {}
 
+    def __check_for_custom_index(self, filepath):
+        try:
+            with zipfile.ZipFile(filepath) as zgood:
+                styles_xml = zgood.read('xl/styles.xml')
+                root = ET.fromstring(styles_xml)
+                for child in root:
+                    if "colors" in child.tag:
+                        for color in child:
+                            if 'indexedColors' in color.tag:
+                                self.custom_index = []
+                                for rgb in color:
+                                    self.custom_index.append(rgb.attrib['rgb'])
+        except:
+            return None
+        
+
     def __open_workbook(self, excel_path):
         try:
-            workbook = openpyxl.load_workbook(excel_path)
+            workbook = openpyxl.load_workbook(excel_path, data_only=True)
             return workbook
         except:
             print("Error opening workbook")
@@ -381,6 +409,7 @@ class ExcelParser:
     def parse_xlsx_to_json_file(self, excel_path):
         try:
             self.workbook = self.__open_workbook(excel_path)
+            self.__check_for_custom_index(excel_path)
             sheet_names = self.workbook.sheetnames
 
             sheet_data = []

@@ -22,7 +22,31 @@
           "columns": [
             {
               "colnumber": "B",
-              "value": "ex1"
+              "value": "ex1",
+              "border": {
+                "bottom": {
+                  "style": "single",
+                  "color": "#000000"
+                }
+              }
+            },
+            {
+              "colnumber": "C",
+              "border": {
+                "bottom": {
+                  "style": "single",
+                  "color": "#000000"
+                }
+              }
+            },
+            {
+              "colnumber": "D",
+              "border": {
+                "bottom": {
+                  "style": "single",
+                  "color": "#000000"
+                }
+              }
             }
           ]
         },
@@ -82,9 +106,21 @@
               "colnumber": "B",
               "value": "test1",
               "border": {
-                "outline": {
+                "left": {
                   "style": "single",
                   "color": "#000000"
+                },
+                "right": {
+                  "style": "single",
+                  "color": "#000000"
+                },
+                "top": {
+                  "style": "single",
+                  "color": "#000000"
+                },
+                "bottom": {
+                  "style": "thick",
+                  "color": "#FF0000"
                 }
               }
             },
@@ -92,9 +128,21 @@
               "colnumber": "C",
               "value": "test2",
               "border": {
-                "outline": {
+                "left": {
                   "style": "single",
                   "color": "#000000"
+                },
+                "right": {
+                  "style": "single",
+                  "color": "#000000"
+                },
+                "top": {
+                  "style": "single",
+                  "color": "#000000"
+                },
+                "bottom": {
+                  "style": "thick",
+                  "color": "#FF0000"
                 }
               }
             },
@@ -105,9 +153,21 @@
                 "strikethrough": true
               },
               "border": {
-                "outline": {
+                "left": {
                   "style": "single",
                   "color": "#000000"
+                },
+                "right": {
+                  "style": "single",
+                  "color": "#000000"
+                },
+                "top": {
+                  "style": "single",
+                  "color": "#000000"
+                },
+                "bottom": {
+                  "style": "thick",
+                  "color": "#FF0000"
                 }
               }
             }
@@ -133,7 +193,36 @@
           ]
         },
         {
-          "linenumber": 6
+          "linenumber": 6,
+          "columns": [
+            {
+              "colnumber": "B",
+              "border": {
+                "top": {
+                  "style": "thick",
+                  "color": "#FF0000"
+                }
+              }
+            },
+            {
+              "colnumber": "C",
+              "border": {
+                "top": {
+                  "style": "thick",
+                  "color": "#FF0000"
+                }
+              }
+            },
+            {
+              "colnumber": "D",
+              "border": {
+                "top": {
+                  "style": "thick",
+                  "color": "#FF0000"
+                }
+              }
+            }
+          ]
         },
         {
           "linenumber": 7,
@@ -141,12 +230,52 @@
             {
               "colnumber": "A",
               "value": "ex2"
+            },
+            {
+              "colnumber": "B",
+              "border": {
+                "bottom": {
+                  "style": "single",
+                  "color": "#000000"
+                }
+              }
+            },
+            {
+              "colnumber": "C",
+              "border": {
+                "bottom": {
+                  "style": "single",
+                  "color": "#000000"
+                }
+              }
+            },
+            {
+              "colnumber": "D",
+              "border": {
+                "bottom": {
+                  "style": "single",
+                  "color": "#000000"
+                }
+              }
             }
           ]
         },
         {
           "linenumber": 8,
           "columns": [
+            {
+              "colnumber": "A",
+              "border": {
+                "right": {
+                  "style": "single",
+                  "color": "#000000"
+                },
+                "bottom": {
+                  "style": "single",
+                  "color": "#000000"
+                }
+              }
+            },
             {
               "colnumber": "B",
               "value": "title11",
@@ -257,8 +386,20 @@
               "value": "test23",
               "rowspan": 3,
               "border": {
-                "outline": {
+                "left": {
                   "style": "single",
+                  "color": "#000000"
+                },
+                "right": {
+                  "style": "single",
+                  "color": "#000000"
+                },
+                "top": {
+                  "style": "single",
+                  "color": "#000000"
+                },
+                "bottom": {
+                  "style": "extrathick",
                   "color": "#000000"
                 }
               }
@@ -307,8 +448,20 @@
               "colnumber": "A",
               "value": "line4",
               "border": {
-                "outline": {
+                "left": {
                   "style": "single",
+                  "color": "#000000"
+                },
+                "right": {
+                  "style": "single",
+                  "color": "#000000"
+                },
+                "top": {
+                  "style": "single",
+                  "color": "#000000"
+                },
+                "bottom": {
+                  "style": "extrathick",
                   "color": "#000000"
                 }
               }
@@ -317,8 +470,20 @@
               "colnumber": "B",
               "value": "test41",
               "border": {
-                "outline": {
+                "left": {
                   "style": "single",
+                  "color": "#000000"
+                },
+                "right": {
+                  "style": "single",
+                  "color": "#000000"
+                },
+                "top": {
+                  "style": "single",
+                  "color": "#000000"
+                },
+                "bottom": {
+                  "style": "extrathick",
                   "color": "#000000"
                 }
               }
@@ -327,8 +492,20 @@
               "colnumber": "C",
               "value": "test42",
               "border": {
-                "outline": {
+                "left": {
                   "style": "single",
+                  "color": "#000000"
+                },
+                "right": {
+                  "style": "single",
+                  "color": "#000000"
+                },
+                "top": {
+                  "style": "single",
+                  "color": "#000000"
+                },
+                "bottom": {
+                  "style": "extrathick",
                   "color": "#000000"
                 }
               }
@@ -337,8 +514,20 @@
               "colnumber": "E",
               "value": "test44",
               "border": {
-                "outline": {
+                "left": {
                   "style": "single",
+                  "color": "#000000"
+                },
+                "right": {
+                  "style": "single",
+                  "color": "#000000"
+                },
+                "top": {
+                  "style": "single",
+                  "color": "#000000"
+                },
+                "bottom": {
+                  "style": "extrathick",
                   "color": "#000000"
                 }
               }
