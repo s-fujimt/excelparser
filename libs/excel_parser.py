@@ -303,7 +303,7 @@ class ExcelParser:
         try:
             rows = []
             for row in self.current_sheet.iter_rows():
-                if row[0].row == self.current_sheet.max_row+1 or empty_rows > 50:
+                if row[0].row == self.current_sheet.max_row+2 or empty_rows > 50:
                     break
                 row_data = self.__get_row_data(row)
                 if row_data:
