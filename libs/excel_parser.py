@@ -153,34 +153,33 @@ class ExcelParser:
                 border_left = []
 
                 for direction in ["top", "right", "bottom", "left"]:
-                    if getattr(border, direction):
-                        if border.bottom.style is None and direction == "bottom":
-                            neighbor = self.current_sheet.cell(row=cell.row+1, column=cell.column)
+                    if (border.bottom is None or border.bottom.style is None) and direction == "bottom":
+                        neighbor = self.current_sheet.cell(row=cell.row+1, column=cell.column)
+                        if neighbor.border:
+                            if neighbor.border.top:
+                                if neighbor.border.top.style:
+                                    locals()[f"border_{direction}"].append(self.__get_border_style(neighbor.border.top.style))
+                                if neighbor.border.top.color:
+                                    locals()[f"border_{direction}"].append(self.__get_color_data(neighbor.border.top.color))
+                    if (border.top is None or border.top.style is None) and direction == "top":
+                        if cell.row != 1:
+                            neighbor = self.current_sheet.cell(row=cell.row-1, column=cell.column)
                             if neighbor.border:
-                                if neighbor.border.top:
-                                    if neighbor.border.top.style:
-                                        locals()[f"border_{direction}"].append(self.__get_border_style(neighbor.border.top.style))
-                                    if neighbor.border.top.color:
-                                        locals()[f"border_{direction}"].append(self.__get_color_data(neighbor.border.top.color))
-                        if border.top.style is None and direction == "top":
-                            if cell.row != 1:
-                                neighbor = self.current_sheet.cell(row=cell.row-1, column=cell.column)
-                                if neighbor.border:
-                                    if neighbor.border.bottom:
-                                        if neighbor.border.bottom.style:
-                                            locals()[f"border_{direction}"].append(self.__get_border_style(neighbor.border.bottom.style))
-                                        if neighbor.border.bottom.color:
-                                            locals()[f"border_{direction}"].append(self.__get_color_data(neighbor.border.bottom.color))
-                        if border.left.style is None and direction == "left":
-                            if cell.column != 1:
-                                neighbor = self.current_sheet.cell(row=cell.row, column=cell.column-1)
-                                if neighbor.border:
-                                    if neighbor.border.right:
-                                        if neighbor.border.right.style:
-                                            locals()[f"border_{direction}"].append(self.__get_border_style(neighbor.border.right.style))
-                                        if neighbor.border.right.color:
-                                            locals()[f"border_{direction}"].append(self.__get_color_data(neighbor.border.right.color))
-                        if border.right.style is None and direction == "right":
+                                if neighbor.border.bottom:
+                                    if neighbor.border.bottom.style:
+                                        locals()[f"border_{direction}"].append(self.__get_border_style(neighbor.border.bottom.style))
+                                    if neighbor.border.bottom.color:
+                                        locals()[f"border_{direction}"].append(self.__get_color_data(neighbor.border.bottom.color))
+                    if (border.left is None or border.left.style is None) and direction == "left":
+                        if cell.column != 1:
+                            neighbor = self.current_sheet.cell(row=cell.row, column=cell.column-1)
+                            if neighbor.border:
+                                if neighbor.border.right:
+                                    if neighbor.border.right.style:
+                                        locals()[f"border_{direction}"].append(self.__get_border_style(neighbor.border.right.style))
+                                    if neighbor.border.right.color:
+                                        locals()[f"border_{direction}"].append(self.__get_color_data(neighbor.border.right.color))
+                    if (border.right is None or border.right.style is None) and direction == "right":
                             neighbor = self.current_sheet.cell(row=cell.row, column=cell.column+1)
                             if neighbor.border:
                                 if neighbor.border.left:
@@ -188,6 +187,8 @@ class ExcelParser:
                                         locals()[f"border_{direction}"].append(self.__get_border_style(neighbor.border.left.style))
                                     if neighbor.border.left.color:
                                         locals()[f"border_{direction}"].append(self.__get_color_data(neighbor.border.left.color))
+                    
+                    if getattr(border, direction):
                         if getattr(border, direction).style:
                             locals()[f"border_{direction}"].append(self.__get_border_style(getattr(border, direction).style))
                         if getattr(border, direction).color:
@@ -283,7 +284,7 @@ class ExcelParser:
             columns = []
             for cell in row:
 
-                if cell.column == self.current_sheet.max_column+1 or empty_cells > 50:
+                if cell.column == self.current_sheet.max_column+1 or empty_cells > 20:
                     break
                 cell_data = self.__get_cell_data(cell)
                 if cell_data:
@@ -303,12 +304,15 @@ class ExcelParser:
         try:
             rows = []
             for row in self.current_sheet.iter_rows():
-                if row[0].row == self.current_sheet.max_row+2 or empty_rows > 50:
+                if row[0].row == self.current_sheet.max_row+2 or empty_rows > 20:
                     break
                 row_data = self.__get_row_data(row)
                 if row_data:
                     rows.append(row_data)
-                    empty_rows = 0
+                    if row_data.get('columns'):
+                        empty_rows = 0
+                    else:
+                        empty_rows += 1
                 else:
                     empty_rows += 1
             return rows
