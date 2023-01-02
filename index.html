@@ -20,8 +20,8 @@
         document.getElementById("sheets").innerHTML = "";
         const formData = new FormData();
         formData.append("file", document.querySelector("#file").files[0]);
-        fetch("http://localhost:5000/parse", {
-          // fetch("https://excelparser-backend.onrender.com/parse", {
+        // fetch("http://localhost:5000/parse", {
+          fetch("https://excelparser-backend.onrender.com/parse", {
           method: "POST",
           body: formData,
         })
