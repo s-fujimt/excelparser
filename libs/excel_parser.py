@@ -9,15 +9,43 @@ class ExcelParser:
     workbook = None
     custom_index  = None
     current_sheet = None
-    current_range = None
+    current_sheet_ranges = None
     empty_rows = 0
     empty_columns = 0
 
-    def __get_merged_ranges(self):
-        return self.current_sheet.merged_cells.ranges if self.current_sheet.merged_cells else []
+    def __open_workbook(self, excel_path):
+        try:
+            self.workbook = openpyxl.load_workbook(excel_path, data_only=True)
+        except:
+            print("Error opening workbook", sys.exc_info()[0])
+            return None
 
-    def __get_first_cells_of_merged_ranges(self):
-        return [merged_range.start_cell.coordinate for merged_range in self.__get_merged_ranges()]
+    def __set_custom_index(self, color):
+        try:
+            self.custom_index = [rgb.attrib['rgb'] for rgb in color]
+        except:
+            print("Error setting custom index", sys.exc_info()[0])
+            return None
+
+    def __check_for_custom_index(self, filepath):
+        try:
+            with zipfile.ZipFile(filepath) as zgood:
+                styles_xml = zgood.read('xl/styles.xml')
+                root = ET.fromstring(styles_xml)
+                [[self.__set_custom_index(color) for color in child if 'indexedColors' in color.tag] for child in root if 'colors' in child.tag]
+        except:
+            print("Error checking for custom index", sys.exc_info()[0])
+            return None
+
+    def __get_default_font_data(self):
+        try:
+            return {
+                "font": self.current_sheet.cell(row=1, column=1).font.name,
+                "size": int(self.current_sheet.cell(row=1, column=1).font.size)
+            }
+        except:
+            print("Error getting default font data", sys.exc_info()[0])
+            return {}
 
     def __is_merged_cell(self, cell, merged_ranges):
         for merged_range in merged_ranges:
@@ -29,6 +57,9 @@ class ExcelParser:
                 return True
         return False
 
+    def __get_first_cells_of_merged_ranges(self):
+        return [merged_range.start_cell.coordinate for merged_range in self.current_sheet_ranges]
+
     def __get_merged_cell_data(self):
         try:
             cell_data = {}
@@ -38,19 +69,9 @@ class ExcelParser:
                 cell_data["rowspan"] = self.current_range["rows"]
             return cell_data
         except:
-            print("Error getting merged cell data")
+            print("Error getting merged cell data", sys.exc_info()[0])
             return {}
 
-    def __get_default_font_data(self):
-        try:
-            return {
-                "font": self.current_sheet.cell(row=1, column=1).font.name,
-                "size": int(self.current_sheet.cell(row=1, column=1).font.size)
-            }
-        except:
-            print("Error getting default font data")
-            return {}
-    
     def __get_cell_alignment(self, cell):
         try:
             alignment = {}
@@ -61,9 +82,9 @@ class ExcelParser:
                     alignment["vertical"] = cell.alignment.vertical
             return alignment
         except:
-            print("Error getting cell alignment")
+            print("Error getting cell alignment", sys.exc_info()[0])
             return {}
-
+    
     def __get_color_from_theme(self, color_data):
         try:
             color = theme_and_tint_to_rgb(self.workbook, color_data.theme, color_data.tint)
@@ -132,28 +153,38 @@ class ExcelParser:
         else:
           return "single"
 
-    def __set_border(self, cell, border, direction, partner):
-        if getattr(border, direction) and getattr(border, direction).style and getattr(border, direction).color:
-            locals()[f"border_{direction}"].append(self.__get_border_style(getattr(border, direction).style))
-            locals()[f"border_{direction}"].append(self.__get_color_data(getattr(border, direction).color))
-        else:
-            if cell.row == 1 and direction == "top":
-                return False
-            if cell.column == 1 and direction == "left":
-                return False
-            if direction == "top":
-                neighbor = self.current_sheet.cell(row=cell.row-1, column=cell.column)
-            if direction == "right":
-                neighbor = self.current_sheet.cell(row=cell.row, column=cell.column+1)
-            if direction == "bottom":
-                neighbor = self.current_sheet.cell(row=cell.row+1, column=cell.column)
-            if direction == "left":
-                neighbor = self.current_sheet.cell(row=cell.row, column=cell.column-1)
-            if getattr(neighbor.border, partner) and getattr(neighbor.border, partner).style and getattr(neighbor.border, partner).color:
-                locals()[f"border_{direction}"].append(self.__get_border_style(getattr(neighbor.border, partner).style))
-                locals()[f"border_{direction}"].append(self.__get_color_data(getattr(neighbor.border, partner).color))
-        return locals()[f"border_{direction}"]
-    
+    def __set_border(self, cell, direction_list):
+        try:
+            border_top, border_right, border_bottom, border_left = [], [], [], []
+            border = cell.border
+            direction = direction_list[0]
+            partner = direction_list[1]
+            neighbor = None
+
+            if getattr(border, direction) and getattr(border, direction).style and getattr(border, direction).color:
+                locals()[f"border_{direction}"].append(self.__get_border_style(getattr(border, direction).style))
+                locals()[f"border_{direction}"].append(self.__get_color_data(getattr(border, direction).color))
+            else:
+                if cell.row == 1 and direction == "top":
+                    return False
+                if cell.column == 1 and direction == "left":
+                    return False
+                if direction == "top":
+                    neighbor = self.current_sheet.cell(row=cell.row-1, column=cell.column)
+                elif direction == "right":
+                    neighbor = self.current_sheet.cell(row=cell.row, column=cell.column+1)
+                elif direction == "bottom":
+                    neighbor = self.current_sheet.cell(row=cell.row+1, column=cell.column)
+                elif direction == "left":
+                    neighbor = self.current_sheet.cell(row=cell.row, column=cell.column-1)
+                if getattr(neighbor.border, partner) and getattr(neighbor.border, partner).style and getattr(neighbor.border, partner).color:
+                    locals()[f"border_{direction}"].append(self.__get_border_style(getattr(neighbor.border, partner).style))
+                    locals()[f"border_{direction}"].append(self.__get_color_data(getattr(neighbor.border, partner).color))
+            return locals()[f"border_{direction}"]
+        except:
+            print("Error setting border", sys.exc_info()[0])
+            return []
+
     def __get_cell_border_data(self, cell, is_merged_cell):
         try:
             cell_border_data, outline = {}, {}
@@ -170,7 +201,9 @@ class ExcelParser:
                     if border_color:
                         outline["color"] = self.__get_color_data(border_color)
             else:
-                [border_top, border_right, border_bottom, border_left]=[self.__set_border(cell, border, direction, partner) for direction, partner in {"top": "bottom", "right": "left", "bottom": "top", "left": "right"}.items() 
+                directions = [("top", "bottom"), ("right", "left"), ("bottom", "top"), ("left", "right")]
+                [border_top, border_right, border_bottom, border_left] = [self.__set_border(cell, direction) for direction in directions]
+                # print(border_top, border_right, border_bottom, border_left) if cell.row == 1 and cell.column == 1 else None
 
                 if border_top == border_right == border_bottom == border_left and len(border_top) > 0:
                     border = border_top
@@ -188,10 +221,10 @@ class ExcelParser:
 
             if outline:
                 cell_border_data["outline"] = outline
-        
+
             return cell_border_data
         except:
-            print("Error getting cell border data (" + cell.coordinate + ")")
+            print("Error getting cell border data (" + cell.coordinate + ")" + sys.exc_info()[0])
             return {}
 
     def __get_fill_color(self, cell):
@@ -206,7 +239,7 @@ class ExcelParser:
             print("Error getting cell fill color (" + str(cell.coordinate) + ")")
             return None
 
-    def __get_cell_data(self, cell):
+    def __map_cell_data(self, cell):
         try:
             cell_data = {
                 "colnumber": cell.coordinate[0]
@@ -216,7 +249,7 @@ class ExcelParser:
             if value != None:
                 cell_data["value"] = cell.value.strftime("%Y/%m/%d") if cell.is_date else value
 
-            is_merged_cell = self.__is_merged_cell(cell, self.__get_merged_ranges())
+            is_merged_cell = self.__is_merged_cell(cell, self.current_sheet_ranges)
             if is_merged_cell:
                 if cell.coordinate not in self.__get_first_cells_of_merged_ranges():
                     return {}
@@ -237,8 +270,8 @@ class ExcelParser:
             fill_color = self.__get_fill_color(cell)
             if fill_color:
                 cell_data["fill"] = {"color":fill_color}
-            
-            if not cell_data.get("value") or not cell_data.get("border") or not cell_data.get("fill"):
+
+            if not (cell_data.get("value") or cell_data.get("border") or cell_data.get("fill")):
                 return {}
 
             return cell_data
@@ -247,10 +280,10 @@ class ExcelParser:
             print(sys.exc_info()[0])
             return {}
 
-    def __get_cell_data_wrapper(self, cell):
-        cell_data = self.__get_cell_data(cell)
+    def __cell_data_wrapper(self, cell):
+        cell_data = self.__map_cell_data(cell)
         self.empty_columns = self.empty_columns + 1 if cell_data == {} else 0
-        return cell_data
+        return cell_data if cell_data else None
 
     def __get_row_data(self, row):
         self.empty_columns = 0
@@ -259,7 +292,8 @@ class ExcelParser:
                 "linenumber": row[0].row
             }
 
-            columns = [self.__get_cell_data_wrapper(cell) for cell in row if self.empty_columns < 50 and cell.column < self.current_sheet.max_column+2]
+            columns = [self.__cell_data_wrapper(cell) for cell in row if self.empty_columns < 50 and cell.column < self.current_sheet.max_column+2]
+            columns = [column for column in columns if column]
             if columns:
                 row_data["columns"] = columns
 
@@ -268,72 +302,41 @@ class ExcelParser:
             print("Error getting row data")
             return {}
 
-    def __get_row_data_wrapper(self, row):
+    def __row_data_wrapper(self, row):
         row_data = self.__get_row_data(row)
         self.empty_rows = self.empty_rows + 1 if row_data.get('columns') is None or row_data == {} else 0
         return row_data
 
-
-    def __get_rows(self):
+    def __map_row_data(self):
         self.empty_rows = 0
         try:
-            rows = [self.__get_row_data_wrapper(row) for row in self.current_sheet.iter_rows() if self.empty_rows < 50 and row[0].row < self.current_sheet.max_row+2]
-            return rows
+            rows =  [self.__row_data_wrapper(row) for row in self.current_sheet.iter_rows() if self.empty_rows < 50 and row[0].row < self.current_sheet.max_row+2]
+            return [row for row in rows if row.get('columns') is not None]
         except:
             print("Error getting rows")
             return []
 
-
-    def __get_sheet_data(self, sheetnumber):
+    def __map_sheet_data(self, sheet, index):
         try:
-            font_data = self.__get_default_font_data()
-            rows = self.__get_rows()
+            self.current_sheet = sheet
+            self.current_sheet_ranges = self.current_sheet.merged_cells.ranges if self.current_sheet.merged_cells else []
 
-            sheet_data = {
-                "sheetnumber": sheetnumber,
-                "sheetname": self.current_sheet.title,
-                "font": font_data,
-                "lines": rows
+            return {
+                "sheetnumber": index + 1,
+                "sheetname": sheet.title,
+                "font": self.__get_default_font_data(),
+                "lines": self.__map_row_data()
             }
-
-            return sheet_data
         except:
-            print("Error getting sheet data")
+            print("Error mapping sheet data", sys.exc_info()[0])
             return {}
 
-    def __set_custom_index(self, color):
-        self.custom_index = [rgb.attrib['rgb'] for rgb in color]
-
-    def __check_for_custom_index(self, filepath):
-        try:
-            with zipfile.ZipFile(filepath) as zgood:
-                styles_xml = zgood.read('xl/styles.xml')
-                root = ET.fromstring(styles_xml)
-                [[self.__set_custom_index(color) for color in child if 'indexedColors' in color.tag] for child in root if 'colors' in child.tag]
- 
-        except:
-            print("Error checking for custom index")
-            return None
-        
-
-    def __open_workbook(self, excel_path):
-        try:
-            self.workbook = openpyxl.load_workbook(excel_path, data_only=True)
-        except:
-            print("Error opening workbook")
-            return None
-
-    def __get_sheet(self, i, sheetname):
-        self.current_sheet = self.workbook[sheetname]
-        return self.__get_sheet_data(i+1)
-    
     def parse_xlsx_to_json_file(self, excel_path):
         try:
             self.__open_workbook(excel_path)
             self.__check_for_custom_index(excel_path)
-            sheet_names = self.workbook.sheetnames
 
-            sheet_data = [self.__get_sheet(i, sheetname) for i, sheetname in enumerate(sheet_names)]
+            sheet_data = [self.__map_sheet_data(sheet, index) for index, sheet in enumerate(self.workbook.worksheets)]
 
             return json.dumps({"sheets": sheet_data}, ensure_ascii=False)
         except Exception as e:
