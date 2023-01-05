@@ -4,11 +4,15 @@ from libs.color_helper import theme_and_tint_to_rgb
 import zipfile
 import xml.etree.ElementTree as ET
 import sys
+from datetime import datetime
+from openpyxl.xml.functions import fromstring, QName
 
 class ExcelParser:
+    excel_path = None
     workbook = None
     custom_index  = None
     current_sheet = None
+    current_sheet_number = 0
     current_sheet_ranges = None
     empty_rows = 0
     empty_columns = 0
@@ -185,6 +189,68 @@ class ExcelParser:
             print("Error setting border", sys.exc_info()[0])
             return []
 
+    # def __set_merged_border(self, cell, direction):
+    #     current_range = list(filter(lambda x: cell.coordinate in x, self.current_sheet.merged_cells.ranges))
+    #     end_cell = self.current_sheet.cell(row=current_range[0].max_row, column=current_range[0].max_col) if current_range else None
+
+    #     xmlns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'
+    #     with zipfile.ZipFile(self.excel_path) as zgood:
+    #         sheet_xml = zgood.read('xl/worksheets/sheet{0}.xml'.format(self.current_sheet_number)) 
+    #         root = ET.fromstring(sheet_xml)
+    #         sheet_data = root.find(QName(xmlns, 'sheetData').text)
+    #         wanted_style = None
+    #         if sheet_data is not None:
+    #             rows = sheet_data.findall(QName(xmlns, 'row').text)
+    #             for r in rows:
+    #                 if r.get('r') == str(end_cell.row):
+    #                     for c in r:
+    #                         if c.get('r') == end_cell.coordinate:
+    #                             wanted_style = c.get("s")
+    #                             break
+    #                 if wanted_style:
+    #                     break
+    #             styles_xml = zgood.read('xl/styles.xml')
+    #             root = ET.fromstring(styles_xml)
+    #             cellxfs = root.find(QName(xmlns, 'cellXfs').text)
+    #             if cellxfs is not None:
+    #                 xfNodes = cellxfs.findall(QName(xmlns, 'xf').text)
+    #                 xfNode = xfNodes[int(wanted_style)]
+    #                 borderId = xfNode.get("borderId")
+    #                 if borderId:
+    #                     borders = root.find(QName(xmlns, 'borders').text)
+    #                     if borders is not None:
+    #                         borderNodes = borders.findall(QName(xmlns, 'border').text)
+    #                         borderNode = borderNodes[int(borderId)]
+    #                         dir_node = borderNode.find(QName(xmlns, direction).text)
+    #                         if dir_node is not None:
+    #                             locals()[f"border_{direction}_style"] = self.__get_border_style(dir_node.get("style"))
+
+    #                             col_node = dir_node.find(QName(xmlns, 'color').text)
+    #                             if col_node is not None:
+    #                                 color = None
+    #                                 if col_node.get("rgb"):
+    #                                     rgb = col_node.get("rgb")
+    #                                     type = "rgb"
+    #                                     color = openpyxl.styles.colors.Color(rgb=rgb, type=type)
+    #                                 elif col_node.get("indexed"):
+    #                                     indexed = col_node.get("indexed")
+    #                                     type = "indexed"
+    #                                     color = openpyxl.styles.colors.Color(indexed=indexed, type=type)
+    #                                 elif col_node.get("auto"):
+    #                                     auto = col_node.get("auto")
+    #                                     type = "auto"
+    #                                     color = openpyxl.styles.colors.Color(auto=auto, type=type)
+    #                                 elif col_node.get("theme"):
+    #                                     theme = col_node.get("theme")
+    #                                     tint = col_node.get("tint")
+    #                                     type = "theme"
+    #                                     color = openpyxl.styles.colors.Color(theme=theme, tint=tint, type=type)
+    #                                 locals()[f"border_{direction}_color"] = self.__get_color_data(color)
+
+    #                                 locals()[f"border_{direction}"] = [locals()[f"border_{direction}_style"], locals()[f"border_{direction}_color"]]
+
+    #                                 return locals()[f"border_{direction}"]
+
     def __get_cell_border_data(self, cell, is_merged_cell):
         try:
             cell_border_data, outline = {}, {}
@@ -192,39 +258,37 @@ class ExcelParser:
             border = cell.border
 
             if is_merged_cell:
-                if border.top:
-                    border_style = border.top.style
-                    if border_style:
-                        outline["style"] = self.__get_border_style(border_style)
-
-                    border_color = border.top.color
-                    if border_color:
-                        outline["color"] = self.__get_color_data(border_color)
+                border_top = self.__set_border(cell, ("top", "bottom"))
+                border_left = self.__set_border(cell, ("left", "right"))
+                border_bottom = self.__set_border(cell, ("bottom", "top"))
+                border_right = self.__set_border(cell, ("right", "left"))
+                # border_bottom = self.__set_merged_border(cell, "bottom")
+                # border_right = self.__set_merged_border(cell, "right")
+                                                
             else:
                 directions = [("top", "bottom"), ("right", "left"), ("bottom", "top"), ("left", "right")]
                 [border_top, border_right, border_bottom, border_left] = [self.__set_border(cell, direction) for direction in directions]
-                # print(border_top, border_right, border_bottom, border_left) if cell.row == 1 and cell.column == 1 else None
 
-                if border_top == border_right == border_bottom == border_left and len(border_top) > 0:
-                    border = border_top
-                    if len(border) == 1:
-                        cell_border_data["outline"] = {"style": border[0]}
-                    if len(border) == 2:
-                        cell_border_data["outline"] = {"style": border[0], "color": border[1]}
-                else:
-                    for direction in ["top", "right", "bottom", "left"]:
-                        if locals()[f"border_{direction}"]:
-                            if len(locals()[f"border_{direction}"]) == 1:
-                                cell_border_data[direction] = {"style": locals()[f"border_{direction}"][0]}
-                            if len(locals()[f"border_{direction}"]) == 2:
-                                cell_border_data[direction] = {"style": locals()[f"border_{direction}"][0], "color": locals()[f"border_{direction}"][1]}
+            if border_top == border_right == border_bottom == border_left and len(border_top) > 0:
+                border = border_top
+                if len(border) == 1:
+                    cell_border_data["outline"] = {"style": border[0]}
+                if len(border) == 2:
+                    cell_border_data["outline"] = {"style": border[0], "color": border[1]}
+            else:
+                for direction in ["top", "right", "bottom", "left"]:
+                    if locals()[f"border_{direction}"]:
+                        if len(locals()[f"border_{direction}"]) == 1:
+                            cell_border_data[direction] = {"style": locals()[f"border_{direction}"][0]}
+                        if len(locals()[f"border_{direction}"]) == 2:
+                            cell_border_data[direction] = {"style": locals()[f"border_{direction}"][0], "color": locals()[f"border_{direction}"][1]}
 
             if outline:
                 cell_border_data["outline"] = outline
 
             return cell_border_data
         except:
-            print("Error getting cell border data (" + cell.coordinate + ")" + sys.exc_info()[0])
+            print("Error getting cell border data (" + cell.coordinate + ")" + sys.exc_info()[0] + " " + str(sys.exc_info()[1]))
             return {}
 
     def __get_fill_color(self, cell):
@@ -248,6 +312,9 @@ class ExcelParser:
             value = cell.value
             if value != None:
                 cell_data["value"] = cell.value.strftime("%Y/%m/%d") if cell.is_date else value
+                if cell._style[3] in [50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60]:
+                    dt = datetime.fromordinal(datetime(1900, 1, 1).toordinal() + cell_data["value"] - 2).strftime("%Y/%m/%d")
+                    cell_data["value"] = dt
 
             is_merged_cell = self.__is_merged_cell(cell, self.current_sheet_ranges)
             if is_merged_cell:
@@ -319,10 +386,11 @@ class ExcelParser:
     def __map_sheet_data(self, sheet, index):
         try:
             self.current_sheet = sheet
+            self.current_sheet_number = index + 1
             self.current_sheet_ranges = self.current_sheet.merged_cells.ranges if self.current_sheet.merged_cells else []
 
             return {
-                "sheetnumber": index + 1,
+                "sheetnumber": self.current_sheet_number,
                 "sheetname": sheet.title,
                 "font": self.__get_default_font_data(),
                 "lines": self.__map_row_data()
@@ -333,6 +401,7 @@ class ExcelParser:
 
     def parse_xlsx_to_json_file(self, excel_path):
         try:
+            self.excel_path = excel_path
             self.__open_workbook(excel_path)
             self.__check_for_custom_index(excel_path)
 
